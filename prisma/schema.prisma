@@ -1,0 +1,112 @@
+// This is your Prisma schema file for Data-Mesh.
+// Docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── Users ────────────────────────────────────────────────────
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String   @map("password_hash")
+  name         String?
+  role         UserRole @default(DEVELOPER)
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  apiKeys ApiKey[]
+
+  @@map("users")
+}
+
+enum UserRole {
+  ADMIN
+  DEVELOPER
+}
+
+// ─── API Keys ─────────────────────────────────────────────────
+model ApiKey {
+  id        String    @id @default(cuid())
+  keyHash   String    @unique @map("key_hash")
+  name      String
+  userId    String    @map("user_id")
+  rateLimit Int       @default(100) @map("rate_limit")
+  isActive  Boolean   @default(true) @map("is_active")
+  lastUsed  DateTime? @map("last_used")
+  expiresAt DateTime? @map("expires_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("api_keys")
+}
+
+// ─── Datasets ─────────────────────────────────────────────────
+model Dataset {
+  id          String        @id @default(cuid())
+  slug        String        @unique
+  name        String
+  source      DataSource
+  description String?
+  unit        String?
+  tags        String[]
+  createdAt   DateTime      @default(now()) @map("created_at")
+  updatedAt   DateTime      @updatedAt @map("updated_at")
+
+  measurements Measurement[]
+
+  @@index([slug])
+  @@map("datasets")
+}
+
+enum DataSource {
+  EEA          // European Environment Agency
+  EUROSTAT     // Eurostat
+  COPERNICUS   // Copernicus Climate Change Service
+}
+
+// ─── Measurements ─────────────────────────────────────────────
+model Measurement {
+  id          String   @id @default(cuid())
+  datasetId   String   @map("dataset_id")
+  country     String   // ISO 3166-1 alpha-2
+  region      String?
+  recordedAt  DateTime @map("recorded_at")
+  value       Float
+  rawMetadata Json?    @map("raw_metadata")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  dataset Dataset @relation(fields: [datasetId], references: [id], onDelete: Cascade)
+
+  @@index([datasetId, country, recordedAt])
+  @@map("measurements")
+}
+
+// ─── Ingestion Runs ───────────────────────────────────────────
+model IngestionRun {
+  id          String            @id @default(cuid())
+  datasetSlug String            @map("dataset_slug")
+  status      IngestionStatus
+  rowsWritten Int               @default(0) @map("rows_written")
+  errorMsg    String?           @map("error_msg")
+  startedAt   DateTime          @map("started_at")
+  finishedAt  DateTime?         @map("finished_at")
+  createdAt   DateTime          @default(now()) @map("created_at")
+
+  @@index([datasetSlug, status])
+  @@map("ingestion_runs")
+}
+
+enum IngestionStatus {
+  RUNNING
+  SUCCESS
+  FAILED
+}
