@@ -6,7 +6,7 @@ export const metadata: Metadata = {
   description: 'Data-Mesh: Clean EU Environmental Data APIs for developers.',
 };
 
-export default function HomePage(): JSX.Element {
+export default function HomePage(): React.JSX.Element {
   return (
     <main>
       <h1>Data-Mesh</h1>

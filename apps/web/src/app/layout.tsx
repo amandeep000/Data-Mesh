@@ -26,7 +26,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({
   children,
-}: Readonly<{ children: React.ReactNode }>): JSX.Element {
+}: Readonly<{ children: React.ReactNode }>): React.JSX.Element {
   return (
     <html lang="en" className={inter.variable}>
       <body>{children}</body>
