@@ -6,13 +6,15 @@
   "tags": ["scope:api", "type:app"],
   "targets": {
     "build": {
-      "executor": "@nx/node:build",
+      "executor": "@nx/webpack:webpack",
       "outputs": ["{options.outputPath}"],
       "options": {
         "outputPath": "dist/apps/api",
         "main": "apps/api/src/main.ts",
         "tsConfig": "apps/api/tsconfig.app.json",
-        "assets": ["apps/api/src/assets"]
+        "assets": ["apps/api/src/assets"],
+        "compiler": "swc",
+        "webpackConfig": "apps/api/webpack.config.js"
       },
       "configurations": {
         "production": {
@@ -23,7 +25,7 @@
       }
     },
     "serve": {
-      "executor": "@nx/node:node",
+      "executor": "@nx/js:node",
       "defaultConfiguration": "development",
       "options": {
         "buildTarget": "api:build"
