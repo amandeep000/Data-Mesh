@@ -1,6 +1,9 @@
-import type { Metadata } from 'next';
-import { Inter } from 'next/font/google';
+import type { Metadata, Viewport } from 'next';
+import { Inter, JetBrains_Mono } from 'next/font/google';
 import './globals.css';
+import { ThemeProvider } from '@/providers/theme-provider';
+import { Toaster } from '@/providers/toaster';
+import { SITE } from '@/lib/config';
 
 const inter = Inter({
   subsets: ['latin'],
@@ -8,28 +11,58 @@ const inter = Inter({
   display: 'swap',
 });
 
+const jetbrainsMono = JetBrains_Mono({
+  subsets: ['latin'],
+  variable: '--font-mono',
+  display: 'swap',
+});
+
 export const metadata: Metadata = {
+  metadataBase: new URL(SITE.url),
   title: {
-    default: 'Data-Mesh | EU Environmental Data API',
-    template: '%s | Data-Mesh',
+    default: `${SITE.name} — ${SITE.tagline}`,
+    template: `%s | ${SITE.name}`,
   },
-  description:
-    'Data-as-a-Service platform for EU Environmental datasets. Clean, normalized, rate-limited API access for developers.',
-  keywords: ['EU data', 'environmental API', 'EEA', 'Eurostat', 'open data'],
-  authors: [{ name: 'Data-Mesh Team' }],
+  description: SITE.description,
+  keywords: ['EU data', 'environmental API', 'EEA', 'Eurostat', 'Copernicus', 'open data', 'DaaS'],
+  authors: [{ name: SITE.name }],
   openGraph: {
     type: 'website',
     locale: 'en_EU',
-    siteName: 'Data-Mesh',
+    siteName: SITE.name,
+    title: `${SITE.name} — ${SITE.tagline}`,
+    description: SITE.description,
   },
+  twitter: {
+    card: 'summary_large_image',
+    title: `${SITE.name} — ${SITE.tagline}`,
+    description: SITE.description,
+  },
+};
+
+export const viewport: Viewport = {
+  themeColor: [
+    { media: '(prefers-color-scheme: light)', color: '#ffffff' },
+    { media: '(prefers-color-scheme: dark)', color: '#0a0f1a' },
+  ],
 };
 
 export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>): React.JSX.Element {
   return (
-    <html lang="en" className={inter.variable}>
-      <body>{children}</body>
+    <html lang="en" suppressHydrationWarning className={`${inter.variable} ${jetbrainsMono.variable}`}>
+      <body className="min-h-screen bg-background font-sans antialiased">
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="dark"
+          enableSystem
+          disableTransitionOnChange
+        >
+          {children}
+          <Toaster />
+        </ThemeProvider>
+      </body>
     </html>
   );
 }

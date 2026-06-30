@@ -1,0 +1,10 @@
+import type { Metadata } from 'next';
+import { AuthForm } from '@/features/auth/auth-form';
+
+export const metadata: Metadata = {
+  title: 'Create account',
+};
+
+export default function RegisterPage(): React.JSX.Element {
+  return <AuthForm mode="register" />;
+}

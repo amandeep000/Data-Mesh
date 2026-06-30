@@ -14,4 +14,5 @@ import { z } from 'zod';
 export * from './lib/schemas/dataset.schema';
 export * from './lib/schemas/auth.schema';
 export * from './lib/schemas/api-key.schema';
+export * from './lib/schemas/ingestion.schema';
 export * from './lib/dtos/pagination.dto';
