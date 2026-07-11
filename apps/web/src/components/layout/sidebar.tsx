@@ -57,7 +57,8 @@ export function Sidebar({ open, onOpenChange }: SidebarProps): React.JSX.Element
           {DASHBOARD_NAV.map((item) => {
             const active =
               pathname === item.href ||
-              (item.href !== ROUTES.dashboardOverview && pathname.startsWith(item.href));
+              (item.href !== ROUTES.dashboardOverview &&
+                Boolean(pathname?.startsWith(item.href)));
             return (
               <Link
                 key={item.href}
