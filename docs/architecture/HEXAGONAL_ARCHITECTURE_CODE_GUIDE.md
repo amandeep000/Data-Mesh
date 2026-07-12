@@ -665,6 +665,67 @@ export class PrismaDatasetRepository implements IDatasetRepository {
 
 ---
 
+## Shared Libraries (`libs/`) — The `@data-mesh/*` Packages
+
+You noticed the inbound ports import from `@data-mesh/api-contracts`:
+
+```ts
+import type { RegisterDto, LoginDto, TokenResponse } from '@data-mesh/api-contracts';
+import { PaginatedResponse } from '@data-mesh/api-contracts';
+```
+
+These are **not missing files** — they already exist in the `libs/` folder at the repo root. The name `@data-mesh/api-contracts` is an **alias** (a nickname) that points at a real folder, configured in `tsconfig.base.json`:
+
+```json
+"@data-mesh/api-contracts": ["libs/api-contracts/src/index.ts"]
+```
+
+So when TypeScript sees `@data-mesh/api-contracts`, it reads `libs/api-contracts/src/index.ts`. No file is missing — the guide just hadn't explained `libs/` yet, which is why the import looks orphaned.
+
+### What is `libs/`?
+
+`libs/` is a monorepo folder for **shared packages** — code that more than one app needs. This repo has two apps: `apps/api` (NestJS) and `apps/web` (Next.js). Both must agree on what a `RegisterDto` or `TokenResponse` looks like. Instead of copying those types into each app, we keep them **once** in `libs/` and both apps import them. That is the "single source of truth" rule in action.
+
+### What's inside `libs/`
+
+| Package | Alias | What it holds | Why it exists |
+|---------|-------|---------------|---------------|
+| `libs/api-contracts` | `@data-mesh/api-contracts` | Zod schemas + their inferred TS types (DTOs, response shapes, `PaginatedResponse`) | The API validates requests with these schemas; the web app parses responses with the same types. Both stay in sync. |
+| `libs/shared/errors` | `@data-mesh/shared-errors` | Typed error classes (`DomainError`, `NotFoundError`, `ConflictError`, …) | Used by use cases (throw) and exception filters (catch). Shared so both sides speak the same error language. |
+| `libs/shared/types` | `@data-mesh/shared-types` | Pure TypeScript types only (`Dataset`, `UserRole`, `ApiKey`, …) — no runtime code | Cross-cutting types shared between apps. |
+
+> Note: `api-key.use-case.ts` imports **nothing** from `libs/` — it only uses local entities (`../../entities/api-key.entity`). So it is fully self-contained. Only `auth.use-case.ts` and `dataset.use-case.ts` reach into `@data-mesh/api-contracts`.
+
+### What is `api-contracts` specifically?
+
+It is the **contract** between client and server: "this is exactly the shape of data that goes in and comes out." Each contract is defined once as a Zod schema, and the TypeScript type is *inferred* from it (never hand-written twice):
+
+```ts
+// libs/api-contracts/src/lib/schemas/auth.schema.ts
+export const RegisterSchema = z.object({
+  email: z.string().email(),
+  password: z.string().min(8)/* ...rules... */,
+  name: z.string().min(2).max(100).optional(),
+});
+
+export type RegisterDto = z.infer<typeof RegisterSchema>; // <- the type the port imports
+```
+
+The `index.ts` re-exports everything so a single import path (`@data-mesh/api-contracts`) gives you all of them. That is why `RegisterDto`, `LoginDto`, `TokenResponse`, and `PaginatedResponse` all resolve — they are already defined in `libs/api-contracts/src/lib/schemas/*` and `dtos/pagination.dto.ts`.
+
+### If you DO need to add a new contract
+
+You do **not** create a file next to your port. You add it to `libs/api-contracts`:
+
+1. Create or edit a schema file under `libs/api-contracts/src/lib/schemas/` (e.g. `measurement.schema.ts`).
+2. Define the Zod schema and its inferred type (`export type XxxDto = z.infer<typeof XxxSchema>`).
+3. Re-export it from `libs/api-contracts/src/index.ts` (e.g. `export * from './lib/schemas/measurement.schema';`).
+4. Now import it anywhere via `@data-mesh/api-contracts`.
+
+This keeps all contracts in one governed place — the whole point of `libs/`.
+
+---
+
 ## Step 5: Inbound Ports — What the App Can Do
 
 Inbound ports are the "use case" interfaces. Controllers call these. They define every operation your API exposes.
