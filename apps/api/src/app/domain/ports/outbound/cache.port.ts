@@ -4,3 +4,4 @@ export interface ICachePort {
   delete(key: string): Promise<void>;
   deletePattern(pattern: string): Promise<void>;
 }
+

@@ -27,7 +27,7 @@ export class RedisCacheAdapter implements ICachePort, OnModuleInit, OnModuleDest
   async get<T>(key: string): Promise<T | null> {
     const value = await this.client.get(key);
     if (!value) return null;
-    return JSON.parse(value) as T;
+    return JSON.parse(value) as T;  
   }
 
   async set<T>(key: string, value: T, ttlSeconds: number): Promise<void> {
